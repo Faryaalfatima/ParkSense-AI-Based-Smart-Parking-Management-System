@@ -59,6 +59,17 @@ compile_commands.json
 
 # vcpkg
 vcpkg_installed/
+# Visual Studio
+.vs/
+Debug/
+Release/
+x64/
+x86/
+*.user
+*.ipch
+*.sdf
+*.VC.db
+*.VC.opendb
 
 # debug information files
 *.dwo
