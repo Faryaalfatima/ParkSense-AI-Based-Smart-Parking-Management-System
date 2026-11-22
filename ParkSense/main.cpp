@@ -1,24 +1,27 @@
-#include "Slot.h"
-// TEST KELIYE
+#include "Queue.h"
+
 int main()
 {
-    Slot s(1, 'A');
-    s.show();
-    s.markOccupied("LEA-1234");
-    s.show();
-    s.markFree();
-    s.show();
+    Queue q;
 
-    Request r1("ABC-111", 3, 1);
-    Request r2("EMG-999", 1, 2);
-    r1.show();
-    r2.show();
+    q.enqueue(Request("ABC-111", 3, 1));
+    q.enqueue(Request("XYZ-222", 2, 2));
+    q.enqueue(Request("LEA-333", 3, 3));
 
-    if (r2.isBefore(r1))
-        cout << "Emergency pehle" << endl;
+    cout << "Waiting list:" << endl;
+    q.show();
 
-    Reservation res("LEA-1234", 1);
-    res.show();
+    cout << endl << "Pehli request nikali:" << endl;
+    Request r = q.dequeue();
+    r.show();
+
+    cout << endl << "Ab waiting list:" << endl;
+    q.show();
+
+    q.dequeue();
+    q.dequeue();
+    cout << endl;
+    q.dequeue();   // khali queue ka test
 
     return 0;
 }
