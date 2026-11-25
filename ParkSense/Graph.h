@@ -117,12 +117,12 @@ public:
             }
             visited[u] = true;
 
-            Slot* s = tree.search(u);
-            if (s != NULL && s->isFree)
-            {
-                lastDistance = dist[u];
-                return u;
-            }
+           int index = tree.search(u);
+            if (index != -1 && tree.data[index].isFree)
+                {
+                    lastDistance = dist[u];
+                    return u;
+                }
 
             for (int v = 0; v < GRAPH_SIZE; v++)
             {
