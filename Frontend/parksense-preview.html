@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParkSense Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --asphalt: #14171c;
+  --slate: #1d222b;
+  --slate-2: #262c38;
+  --rule: #343c4b;
+  --paint: #ebe7d8;
+  --muted: #98a2b3;
+  --hazard: #f4c430;
+  --free: #38d18a;
+  --taken: #ff5a4f;
+  --vip: #a78bfa;
+  --normal: #62a0ea;
+  --emerg: #ff5a4f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--asphalt); }
+body {
+  margin: 0;
+  background: var(--asphalt);
+  color: var(--paint);
+  font: 400 15px/1.45 "Barlow", "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+}
+h1, h2, h3, .cond {
+  font-family: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+}
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--hazard); outline-offset: 2px; }
+
+/* ---------- page frame ---------- */
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 20px 40px; }
+header.top {
+  display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center;
+  justify-content: space-between; padding: 18px 0 14px;
+}
+.brand h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: .01em; line-height: 1; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.stats { display: flex; gap: 22px; }
+.stat { display: flex; flex-direction: column; align-items: flex-start; }
+.stat b { font: 700 30px/1 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+.stat.free b { color: var(--free); }
+.stat.taken b { color: var(--taken); }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  border: 1px solid var(--rule); background: var(--slate); border-radius: 5px;
+  padding: 8px 14px; cursor: pointer; font-weight: 500; transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--slate-2); border-color: #4a5468; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--hazard); color: #16130a; border-color: var(--hazard); font-weight: 600; }
+.btn.primary:hover { background: #ffd24f; }
+.btn.quiet { background: transparent; }
+
+/* ---------- the lot (hero) ---------- */
+.lot-wrap { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: #181b21; }
+.lot-scroll { overflow-x: auto; }
+.scene {
+  position: relative; min-width: 860px;
+  display: grid; grid-template-columns: 270px 70px 1fr; grid-template-rows: auto 84px auto;
+  background: radial-gradient(900px 400px at 60% 40%, #20242c 0, #181b21 70%);
+}
+.kerb {
+  grid-column: 1 / 3; padding: 14px 16px; color: var(--muted); font-size: 13px;
+  background: repeating-linear-gradient(135deg, #222833 0 10px, #1d222b 10px 20px);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.kerb strong { font: 600 17px "Barlow Condensed", sans-serif; color: var(--paint); }
+.kerb.top { grid-row: 1; justify-content: flex-start; }
+.kerb.bottom { grid-row: 3; justify-content: flex-end; }
+.road { position: relative; background: #12151a; }
+.road::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1px;
+  background: repeating-linear-gradient(90deg, var(--hazard) 0 22px, transparent 22px 44px); opacity: .75;
+}
+.lane { grid-column: 1; grid-row: 2; }
+.gate { grid-column: 2; grid-row: 2; position: relative; background: #12151a; border-left: 4px solid #3b4352; border-right: 4px solid #3b4352; }
+.gate::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; background: repeating-linear-gradient(90deg, var(--hazard) 0 10px, transparent 10px 20px); opacity: .75; }
+.arm {
+  position: absolute; left: 50%; top: 4px; width: 8px; height: 76px; margin-left: -4px; z-index: 3;
+  background: repeating-linear-gradient(0deg, var(--hazard) 0 10px, #23262d 10px 20px);
+  transform-origin: 50% 0; transition: transform .45s cubic-bezier(.4, 0, .2, 1); border-radius: 2px;
+}
+.gate.open .arm { transform: rotate(-88deg); }
+.road.inner { grid-column: 3; grid-row: 2; }
+.bays { display: grid; grid-template-columns: repeat(5, 1fr); }
+.bays.top { grid-column: 3; grid-row: 1; }
+.bays.bottom { grid-column: 3; grid-row: 3; }
+.bay {
+  position: relative; height: 128px; border-left: 3px solid var(--paint); transition: background .3s;
+  background: rgba(56, 209, 138, .06);
+}
+.bays .bay:last-child { border-right: 3px solid var(--paint); }
+.bays.top .bay { border-top: 3px solid var(--paint); }
+.bays.bottom .bay { border-bottom: 3px solid var(--paint); }
+.bay.taken { background: rgba(255, 90, 79, .09); }
+.bay .num {
+  position: absolute; left: 0; right: 0; text-align: center; font: 700 24px/1 "Barlow Condensed", sans-serif;
+  color: rgba(235, 231, 216, .32);
+}
+.bays.top .num { top: 8px; }
+.bays.bottom .num { bottom: 8px; }
+.bay .num small { font-size: 13px; font-weight: 600; margin-left: 4px; }
+.bay .lamp {
+  position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--free); box-shadow: 0 0 8px var(--free);
+}
+.bays.bottom .lamp { top: auto; bottom: 8px; }
+.bay.taken .lamp { background: var(--taken); box-shadow: 0 0 8px var(--taken); }
+.bay.hit { animation: hit 1.1s ease-in-out 3; }
+@keyframes hit {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(244, 196, 48, 0); }
+  50% { box-shadow: inset 0 0 0 4px var(--hazard); }
+}
+.more-q {
+  position: absolute; z-index: 4; font: 600 15px "Barlow Condensed", sans-serif; color: var(--hazard);
+  background: #12151a; padding: 1px 6px; border-radius: 3px; display: none;
+}
+
+/* ---------- cars ---------- */
+.car {
+  position: absolute; left: 0; top: 0; width: 34px; height: 62px; z-index: 5; pointer-events: none;
+  transition: transform .8s cubic-bezier(.45, .1, .25, 1), opacity .35s; opacity: 0; --rot: 0deg;
+}
+.car svg { width: 100%; height: 100%; display: block; color: var(--c); filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .55)); }
+.car .plate {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(calc(var(--rot) * -1));
+  background: #f4f1e6; color: #14171c; border-radius: 2px; padding: 0 3px; white-space: nowrap;
+  font: 700 12px/15px "Barlow Condensed", sans-serif; letter-spacing: .04em;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .45);
+}
+.siren-a, .siren-b { animation: siren .7s steps(1) infinite; }
+.siren-b { animation-delay: .35s; }
+@keyframes siren { 0%, 100% { fill: #ff5a4f; } 50% { fill: #5ab0ff; } }
+
+/* ---------- desk: controls + log ---------- */
+.desk { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.panel { background: var(--slate); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; }
+.panel h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: .01em; }
+.panel .why { margin: 2px 0 12px; color: var(--muted); font-size: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > label, .field > .lbl { font-size: 13px; color: var(--muted); }
+input[type=text], input[type=number], select {
+  background: #12151a; border: 1px solid var(--rule); border-radius: 5px; padding: 8px 10px; min-width: 0;
+}
+input[type=text] { width: 150px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+input[type=number] { width: 80px; }
+.types { display: flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.types label { position: relative; cursor: pointer; }
+.types input { position: absolute; opacity: 0; inset: 0; }
+.types span { display: block; padding: 8px 12px; background: #12151a; border-right: 1px solid var(--rule); font-weight: 500; }
+.types label:last-child span { border-right: 0; }
+.types input:checked + span { background: var(--slate-2); box-shadow: inset 0 -3px 0 var(--dot); }
+.types input:focus-visible + span { outline: 2px solid var(--hazard); outline-offset: -2px; }
+.group-title { font: 600 16px "Barlow Condensed", sans-serif; margin: 6px 0 6px; color: var(--paint); }
+.msg { min-height: 22px; font-size: 14px; margin: 0; color: var(--muted); }
+.msg.warn { color: #ff9d94; }
+.msg.ok { color: var(--free); }
+
+.log { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 62px 1fr; gap: 10px; padding: 7px 0; border-top: 1px solid var(--rule); font-size: 14px; }
+.log li:first-child { border-top: 0; }
+.tag { font: 600 14px "Barlow Condensed", sans-serif; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.tag i { width: 9px; height: 9px; border-radius: 50%; background: var(--d); display: inline-block; }
+
+/* ---------- backstage ---------- */
+.stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.empty { color: var(--muted); font-size: 14px; padding: 18px 0; }
+svg.diagram { width: 100%; height: auto; max-height: 300px; display: block; }
+.diagram text { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
+
+.cabinet { display: grid; gap: 4px; }
+.hook { display: grid; grid-template-columns: 34px 1fr; align-items: center; min-height: 30px; border-radius: 4px; padding: 1px 0; }
+.hook .hn { font: 700 16px "Barlow Condensed", sans-serif; color: var(--hazard); text-align: center; }
+.hook .keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-bottom: 1px dashed var(--rule); padding: 2px 0 3px; min-height: 28px; }
+.hook .none { color: #5d6678; font-size: 13px; }
+.key {
+  background: #f4f1e6; color: #14171c; border-radius: 3px; padding: 0 7px; font: 700 14px/22px "Barlow Condensed", sans-serif; letter-spacing: .03em;
+  display: inline-flex; gap: 6px; align-items: center;
+}
+.key b { font-weight: 600; color: #4b5260; }
+.coll { font-size: 13px; color: var(--hazard); }
+.hook.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { background: rgba(244, 196, 48, .35); } 100% { background: transparent; } }
+
+footer { margin-top: 22px; color: var(--muted); font-size: 13px; }
+
+.swipe { display: none; margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+@media (max-width: 980px) {
+  .desk, .stage { grid-template-columns: 1fr; }
+  .swipe { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .car, .arm { transition-duration: .01s !important; }
+  .siren-a, .siren-b, .bay.hit, .hook.flash { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>ParkSense</h1>
+      <p>A visual walk-through of the C++ project: five data structures, one parking lot.</p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat free"><b id="sFree">0</b><span>Free bays</span></div>
+      <div class="stat taken"><b id="sTaken">0</b><span>Taken bays</span></div>
+      <div class="stat"><b id="sPending">0</b><span>Pending requests</span></div>
+      <div class="stat"><b id="sWaiting">0</b><span>In waiting lane</span></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn primary" id="btnDemo">Play demo</button>
+      <button class="btn" id="btnSample">Load sample data</button>
+      <button class="btn quiet" id="btnReset">Reset</button>
+    </div>
+  </header>
+
+  <p class="swipe">Swipe the parking lot sideways to see all the bays.</p>
+  <section class="lot-wrap" aria-label="Parking lot">
+    <div class="lot-scroll">
+      <div class="scene" id="scene">
+        <div class="kerb top">
+          <strong>Waiting lane</strong>
+          <span>Queue: first car in is the first car out.</span>
+        </div>
+        <div class="road lane" id="lane"></div>
+        <div class="gate" id="gate"><div class="arm"></div></div>
+        <div class="bays top" id="baysTop"></div>
+        <div class="road inner" id="road"></div>
+        <div class="bays bottom" id="baysBottom"></div>
+        <div class="kerb bottom">
+          <strong>Entrance gate</strong>
+          <span>The barrier lifts for every car that enters or leaves.</span>
+        </div>
+        <div class="more-q" id="moreQ"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="desk">
+    <div class="panel" aria-labelledby="hDesk">
+      <h2 id="hDesk">Attendant desk</h2>
+      <p class="why">Use these controls to run the same operations as the C++ menu.</p>
+
+      <div class="row">
+        <div class="field">
+          <label for="plate">Number plate</label>
+          <input type="text" id="plate" maxlength="10" placeholder="e.g. LEA-123" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <span class="lbl" id="typeLbl">Request type</span>
+          <div class="types" role="radiogroup" aria-labelledby="typeLbl">
+            <label style="--dot:var(--emerg)"><input type="radio" name="type" value="1"><span>Emergency</span></label>
+            <label style="--dot:var(--vip)"><input type="radio" name="type" value="2"><span>VIP</span></label>
+            <label style="--dot:var(--normal)"><input type="radio" name="type" value="3" checked><span>Normal</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-title">Reserve a bay</div>
+      <div class="row">
+        <button class="btn primary" id="btnAdd">Add request</button>
+        <button class="btn" id="btnProcess">Process next request</button>
+      </div>
+
+      <div class="group-title">Existing reservation</div>
+      <div class="row">
+        <div class="field">
+          <label for="hours">Hours parked</label>
+          <input type="number" id="hours" min="1" max="72" step="1" value="2">
+        </div>
+        <button class="btn" id="btnSearch">Search plate</button>
+        <button class="btn" id="btnCancel">Cancel</button>
+        <button class="btn" id="btnCheckout">Check out</button>
+      </div>
+
+      <div class="group-title">Nearby suggestion</div>
+      <div class="row">
+        <div class="field">
+          <label for="startSel">Start from</label>
+          <select id="startSel"></select>
+        </div>
+        <button class="btn" id="btnNearest">Find nearest free bay</button>
+      </div>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="panel" aria-labelledby="hLog">
+      <h2 id="hLog">What just happened</h2>
+      <p class="why">Each line names the data structure that did the work.</p>
+      <ol class="log" id="log"></ol>
+    </div>
+  </section>
+
+  <section class="stage" aria-label="Data structures">
+    <div class="panel">
+      <h2>Request board</h2>
+      <p class="why">Min heap. The most urgent request is always at the top, and it is the next one served.</p>
+      <div id="heapEl"></div>
+    </div>
+    <div class="panel">
+      <h2>Key cabinet</h2>
+      <p class="why">Hash table with 10 hooks. A plate is added up and divided by 10 to pick its hook. Two plates on one hook is a collision, kept as a chain.</p>
+      <div class="cabinet" id="hashEl"></div>
+    </div>
+    <div class="panel">
+      <h2>Bay directory</h2>
+      <p class="why">Binary search tree of bay numbers. Smaller numbers go left, bigger go right, so the smallest free bay is found by walking left first.</p>
+      <div id="bstEl"></div>
+    </div>
+    <div class="panel">
+      <h2>Site map</h2>
+      <p class="why">Graph of the entrance and bays. Numbers on the lines are distances in metres, and the nearest free bay comes from Dijkstra's algorithm.</p>
+      <div id="graphEl"></div>
+    </div>
+  </section>
+
+  <footer>This page only shows how the structures behave. The real logic is in the C++ files: BST.h, MinHeap.h, Queue.h, HashTable.h and Graph.h.</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MAX_SLOTS = 50, MAX_REQUESTS = 50, TABLE_SIZE = 10, RATE = 50, INF = 999999;
+  var SLOT_COUNT = 10;
+  var TYPE_NAME = { 1: 'Emergency', 2: 'VIP', 3: 'Normal' };
+  var TYPE_COLOR = { 1: '#ff5a4f', 2: '#a78bfa', 3: '#62a0ea' };
+  var TAGS = {
+    BST: { name: 'Tree', color: '#38d18a' },
+    Heap: { name: 'Heap', color: '#a78bfa' },
+    Queue: { name: 'Queue', color: '#f4c430' },
+    Hash: { name: 'Hash', color: '#62a0ea' },
+    Graph: { name: 'Graph', color: '#ff9f4d' },
+    Info: { name: 'Info', color: '#98a2b3' }
+  };
+
+  /* ================= data structures (same ideas as the C++ files) ================= */
+
+  function BST() {
+    this.data = []; this.left = []; this.right = []; this.used = []; this.root = -1;
+    for (var i = 0; i < MAX_SLOTS; i++) {
+      this.data[i] = null; this.left[i] = -1; this.right[i] = -1; this.used[i] = false;
+    }
+  }
+  BST.prototype.findEmptyPlace = function () {
+    for (var i = 0; i < MAX_SLOTS; i++) { if (!this.used[i]) return i; }
+    return -1;
+  };
+  BST.prototype.search = function (id) {
+    var cur = this.root;
+    while (cur !== -1) {
+      var key = this.data[cur].id;
+      if (id === key) return cur;
+      cur = id < key ? this.left[cur] : this.right[cur];
+    }
+    return -1;
+  };
+  BST.prototype.insert = function (slot) {
+    if (this.search(slot.id) !== -1) return false;
+    var place = this.findEmptyPlace();
+    if (place === -1) return false;
+    this.data[place] = slot; this.left[place] = -1; this.right[place] = -1; this.used[place] = true;
+    if (this.root === -1) { this.root = place; return true; }
+    var cur = this.root;
+    while (true) {
+      if (slot.id < this.data[cur].id) {
+        if (this.left[cur] === -1) { this.left[cur] = place; return true; }
+        cur = this.left[cur];
+      } else {
+        if (this.right[cur] === -1) { this.right[cur] = place; return true; }
+        cur = this.right[cur];
+      }
+    }
+  };
+  BST.prototype.findFree = function (node) {
+    if (node === -1) return -1;
+    var r = this.findFree(this.left[node]);
+    if (r !== -1) return r;
+    if (this.data[node].free) return node;
+    return this.findFree(this.right[node]);
+  };
+
+  function MinHeap() { this.a = []; }
+  MinHeap.prototype.before = function (x, y) {
+    if (x.priority !== y.priority) return x.priority < y.priority;
+    return x.no < y.no;
+  };
+  MinHeap.prototype.count = function () { return this.a.length; };
+  MinHeap.prototype.insert = function (r) {
+    this.a.push(r);
+    var i = this.a.length - 1;
+    while (i > 0) {
+      var p = Math.floor((i - 1) / 2);
+      if (this.before(this.a[i], this.a[p])) {
+        var t = this.a[i]; this.a[i] = this.a[p]; this.a[p] = t; i = p;
+      } else break;
+    }
+  };
+  MinHeap.prototype.extractMin = function () {
+    var top = this.a[0];
+    var last = this.a.pop();
+    if (this.a.length > 0) {
+      this.a[0] = last;
+      var i = 0, n = this.a.length;
+      while (true) {
+        var l = 2 * i + 1, r = 2 * i + 2, s = i;
+        if (l < n && this.before(this.a[l], this.a[s])) s = l;
+        if (r < n && this.before(this.a[r], this.a[s])) s = r;
+        if (s !== i) { var t = this.a[i]; this.a[i] = this.a[s]; this.a[s] = t; i = s; } else break;
+      }
+    }
+    return top;
+  };
+
+  function HashTable() {
+    this.t = [];
+    for (var i = 0; i < TABLE_SIZE; i++) this.t.push([]);
+  }
+  HashTable.prototype.hash = function (plate) {
+    var sum = 0;
+    for (var i = 0; i < plate.length; i++) sum += plate.charCodeAt(i);
+    return sum % TABLE_SIZE;
+  };
+  HashTable.prototype.insert = function (plate, slotId) {
+    var idx = this.hash(plate), chain = this.t[idx];
+    for (var i = 0; i < chain.length; i++) {
+      if (chain[i].plate === plate) { chain[i].slotId = slotId; return idx; }
+    }
+    chain.unshift({ plate: plate, slotId: slotId });
+    return idx;
+  };
+  HashTable.prototype.search = function (plate) {
+    var chain = this.t[this.hash(plate)];
+    for (var i = 0; i < chain.length; i++) { if (chain[i].plate === plate) return chain[i].slotId; }
+    return -1;
+  };
+  HashTable.prototype.remove = function (plate) {
+    var chain = this.t[this.hash(plate)];
+    for (var i = 0; i < chain.length; i++) {
+      if (chain[i].plate === plate) { chain.splice(i, 1); return true; }
+    }
+    return false;
+  };
+
+  function Graph(n) {
+    this.n = n; this.m = []; this.exists = []; this.edges = []; this.lastDistance = -1;
+    for (var i = 0; i < n; i++) {
+      this.exists[i] = false;
+      var row = [];
+      for (var j = 0; j < n; j++) row.push(0);
+      this.m.push(row);
+    }
+  }
+  Graph.prototype.addNode = function (id) { this.exists[id] = true; };
+  Graph.prototype.addEdge = function (a, b, d) {
+    if (!this.exists[a] || !this.exists[b] || d <= 0) return;
+    this.m[a][b] = d; this.m[b][a] = d; this.edges.push([a, b, d]);
+  };
+  Graph.prototype.nearestFree = function (start, tree) {
+    this.lastDistance = -1;
+    if (start < 0 || start >= this.n || !this.exists[start]) return -1;
+    var dist = [], vis = [], i;
+    for (i = 0; i < this.n; i++) { dist.push(INF); vis.push(false); }
+    dist[start] = 0;
+    for (var c = 0; c < this.n; c++) {
+      var u = -1;
+      for (i = 0; i < this.n; i++) {
+        if (this.exists[i] && !vis[i] && dist[i] < INF) { if (u === -1 || dist[i] < dist[u]) u = i; }
+      }
+      if (u === -1) break;
+      vis[u] = true;
+      var idx = tree.search(u);
+      if (idx !== -1 && tree.data[idx].free) { this.lastDistance = dist[u]; return u; }
+      for (var v = 0; v < this.n; v++) {
+        if (this.m[u][v] > 0 && !vis[v] && dist[u] + this.m[u][v] < dist[v]) dist[v] = dist[u] + this.m[u][v];
+      }
+    }
+    return -1;
+  };
+
+  /* ================= state ================= */
+
+  var bst, heap, queue, hash, graph, requestNo, flashBucket = -1, nearestHit = -1;
+  var cars = {};            // plate -> { el, seq, state, slot }
+  var demoToken = 0, gateTimer = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var scene = $('scene'), laneEl = $('lane'), gateEl = $('gate'), roadEl = $('road');
+  var bayEls = {};
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  /* ================= bays (built once) ================= */
+
+  function buildBays() {
+    var top = $('baysTop'), bottom = $('baysBottom'), sel = $('startSel');
+    sel.innerHTML = '<option value="0">Entrance gate</option>';
+    for (var id = 1; id <= SLOT_COUNT; id++) {
+      var d = document.createElement('div');
+      d.className = 'bay';
+      d.innerHTML = '<span class="num">' + id + '<small>' + (id <= 5 ? 'A' : 'B') + '</small></span><span class="lamp"></span>';
+      (id <= 5 ? top : bottom).appendChild(d);
+      bayEls[id] = d;
+      sel.innerHTML += '<option value="' + id + '">Bay ' + id + '</option>';
+    }
+  }
+
+  /* ================= messages and log ================= */
+
+  var msgTimer = null;
+  function msg(text, kind) {
+    var m = $('msg');
+    m.textContent = text; m.className = 'msg ' + (kind || '');
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(function () { m.textContent = ''; m.className = 'msg'; }, 6000);
+  }
+  function log(tag, text) {
+    var t = TAGS[tag] || TAGS.Info;
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="tag" style="--d:' + t.color + '"><i></i>' + t.name + '</span><span>' + esc(text) + '</span>';
+    var ol = $('log');
+    ol.insertBefore(li, ol.firstChild);
+    while (ol.children.length > 60) ol.removeChild(ol.lastChild);
+  }
+
+  /* ================= car animation ================= */
+
+  function rel(el) {
+    var s = scene.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2, w: r.width, h: r.height };
+  }
+  function roadY() { return rel(roadEl).y; }
+  function gatePos() { return { x: rel(gateEl).x, y: roadY() }; }
+  function queuePos(k) { var g = gatePos(); return { x: g.x - 62 - k * 68, y: g.y }; }
+  function spawnPos() { var l = rel(laneEl); return { x: l.x - l.w / 2 - 50, y: roadY() }; }
+
+  function carSVG(type) {
+    var siren = type === 1
+      ? '<rect class="siren-a" x="9" y="27" width="7" height="5" rx="2" fill="#ff5a4f"/><rect class="siren-b" x="18" y="27" width="7" height="5" rx="2" fill="#5ab0ff"/>'
+      : '';
+    return '<svg viewBox="0 0 34 62" aria-hidden="true">' +
+      '<rect x="3" y="2" width="28" height="58" rx="10" fill="currentColor"/>' +
+      '<rect x="8" y="10" width="18" height="12" rx="3" fill="#0d1016" opacity=".85"/>' +
+      '<rect x="8" y="39" width="18" height="11" rx="3" fill="#0d1016" opacity=".85"/>' +
+      '<rect x="5" y="3" width="7" height="4" rx="2" fill="#fff6c8"/><rect x="22" y="3" width="7" height="4" rx="2" fill="#fff6c8"/>' +
+      '<rect x="5" y="55" width="7" height="3" rx="1.5" fill="#ff5a4f"/><rect x="22" y="55" width="7" height="3" rx="1.5" fill="#ff5a4f"/>' +
+      siren + '</svg>';
+  }
+
+  function place(c, x, y, rot, ms) {
+    c.el.style.transitionDuration = (ms || 0) + 'ms';
+    c.el.style.transform = 'translate(' + (x - 17) + 'px,' + (y - 31) + 'px) rotate(' + rot + 'deg)';
+    c.el.style.setProperty('--rot', rot + 'deg');
+  }
+
+  function createCar(r, at) {
+    var el = document.createElement('div');
+    el.className = 'car';
+    el.style.setProperty('--c', TYPE_COLOR[r.priority]);
+    el.innerHTML = carSVG(r.priority) + '<span class="plate">' + esc(r.plate) + '</span>';
+    scene.appendChild(el);
+    var c = { el: el, seq: 0, state: 'new', slot: 0, type: r.priority };
+    cars[r.plate] = c;
+    var p = at || spawnPos();
+    place(c, p.x, p.y, 90, 0);
+    void el.offsetWidth;
+    el.style.opacity = 1;
+    return c;
+  }
+
+  function openGate() {
+    gateEl.classList.add('open');
+    clearTimeout(gateTimer);
+    gateTimer = setTimeout(function () { gateEl.classList.remove('open'); }, 1800);
+  }
+
+  async function run(c, steps) {
+    var my = ++c.seq;
+    for (var i = 0; i < steps.length; i++) {
+      if (c.seq !== my) return false;
+      var s = steps[i];
+      if (s.gate) openGate();
+      place(c, s.x, s.y, s.rot, s.ms);
+      await sleep(s.ms + 40);
+    }
+    return c.seq === my;
+  }
+
+  function parkRotation(slotId) { return slotId <= 5 ? 0 : 180; }
+
+  async function parkCar(r, slotId, fromQueue) {
+    var c = cars[r.plate] || createCar(r);
+    c.state = 'parked'; c.slot = slotId;
+    var g = gatePos(), b = rel(bayEls[slotId]);
+    var steps = [];
+    if (!fromQueue) steps.push({ x: g.x - 60, y: g.y, rot: 90, ms: 800 });
+    steps.push({ x: g.x, y: g.y, rot: 90, ms: 550, gate: true });
+    steps.push({ x: b.x, y: g.y, rot: 90, ms: Math.max(500, Math.abs(b.x - g.x) * 2.6) });
+    steps.push({ x: b.x, y: b.y, rot: parkRotation(slotId), ms: 650 });
+    await run(c, steps);
+  }
+
+  function parkInstant(r, slotId) {
+    var c = createCar(r);
+    c.state = 'parked'; c.slot = slotId;
+    var b = rel(bayEls[slotId]);
+    place(c, b.x, b.y, parkRotation(slotId), 0);
+  }
+
+  async function exitCar(plate) {
+    var c = cars[plate];
+    if (!c) return;
+    delete cars[plate];
+    var g = gatePos(), b = rel(bayEls[c.slot]), sp = spawnPos();
+    c.state = 'leaving';
+    var outRot = c.slot <= 5 ? 180 : 0;
+    var ok = await run(c, [
+      { x: b.x, y: g.y, rot: outRot, ms: 650 },
+      { x: g.x + 30, y: g.y, rot: -90, ms: Math.max(500, Math.abs(b.x - g.x) * 2.6) },
+      { x: g.x - 40, y: g.y, rot: -90, ms: 600, gate: true },
+      { x: sp.x, y: g.y, rot: -90, ms: 700 }
+    ]);
+    if (ok) { c.el.style.opacity = 0; await sleep(380); }
+    c.el.remove();
+  }
+
+  function layoutQueue(instant) {
+    var more = 0;
+    for (var k = 0; k < queue.length; k++) {
+      var c = cars[queue[k].plate];
+      if (!c || c.state !== 'queue') continue;
+      c.seq++;
+      var p = queuePos(k);
+      place(c, p.x, p.y, 90, instant ? 0 : 600);
+      c.el.style.opacity = k < 4 ? 1 : 0;
+      if (k >= 4) more++;
+    }
+    var m = $('moreQ');
+    if (more > 0) {
+      var l = rel(laneEl);
+      m.textContent = '+' + more + ' more';
+      m.style.left = (l.x - l.w / 2 + 8) + 'px'; m.style.top = (l.y - 12) + 'px'; m.style.display = 'block';
+    } else {
+      m.style.display = 'none';
+    }
+  }
+
+  function relayoutAll() {
+    var plate;
+    for (plate in cars) {
+      var c = cars[plate];
+      if (c.state === 'parked') {
+        var b = rel(bayEls[c.slot]);
+        place(c, b.x, b.y, parkRotation(c.slot), 0);
+      }
+    }
+    layoutQueue(true);
+  }
+
+  /* ================= rendering ================= */
+
+  function renderStats() {
+    var free = 0, taken = 0;
+    for (var i = 0; i < MAX_SLOTS; i++) {
+      if (bst.used[i]) { if (bst.data[i].free) free++; else taken++; }
+    }
+    $('sFree').textContent = free; $('sTaken').textContent = taken;
+    $('sPending').textContent = heap.count(); $('sWaiting').textContent = queue.length;
+  }
+
+  function renderBays() {
+    for (var id = 1; id <= SLOT_COUNT; id++) {
+      var idx = bst.search(id), el = bayEls[id];
+      var taken = idx !== -1 && !bst.data[idx].free;
+      el.classList.toggle('taken', taken);
+      el.title = 'Bay ' + id + ', zone ' + (id <= 5 ? 'A' : 'B') + (taken ? ', taken by ' + bst.data[idx].plate : ', free');
+    }
+  }
+
+  function layoutTree(rootIdx, leftOf, rightOf) {
+    var pos = {}, x = 0, maxD = 0;
+    (function walk(i, d) {
+      if (i === -1) return;
+      walk(leftOf(i), d + 1);
+      pos[i] = { x: x++, d: d };
+      if (d > maxD) maxD = d;
+      walk(rightOf(i), d + 1);
+    })(rootIdx, 0);
+    return { pos: pos, cols: x, depth: maxD + 1 };
+  }
+
+  function renderHeap() {
+    var el = $('heapEl'), n = heap.count();
+    if (n === 0) { el.innerHTML = '<p class="empty">No pending requests. Add one and it appears here, ordered by urgency.</p>'; return; }
+    var L = layoutTree(0, function (i) { return 2 * i + 1 < n ? 2 * i + 1 : -1; }, function (i) { return 2 * i + 2 < n ? 2 * i + 2 : -1; });
+    var cw = 66, rh = 56, W = L.cols * cw + 20, H = L.depth * rh + 26, lines = '', nodes = '';
+    Object.keys(L.pos).forEach(function (k) {
+      var i = +k, p = L.pos[i], px = p.x * cw + cw / 2 + 4, py = p.d * rh + 34, r = heap.a[i];
+      [2 * i + 1, 2 * i + 2].forEach(function (ch) {
+        if (ch < n) { var q = L.pos[ch]; lines += '<line x1="' + px + '" y1="' + py + '" x2="' + (q.x * cw + cw / 2 + 4) + '" y2="' + (q.d * rh + 34) + '" stroke="#475068" stroke-width="2"/>'; }
+      });
+      nodes += '<g><rect x="' + (px - 29) + '" y="' + (py - 13) + '" width="58" height="26" rx="5" fill="#12151a" stroke="' + TYPE_COLOR[r.priority] + '" stroke-width="2.5"/>' +
+        '<text x="' + px + '" y="' + (py + 5) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#ebe7d8">' + esc(r.plate) + '</text></g>';
+    });
+    var root = L.pos[0];
+    var tip = '<text x="' + (root.x * cw + cw / 2 + 4) + '" y="12" text-anchor="middle" font-size="14" fill="#f4c430">next out</text>';
+    var legend = '<g font-size="13" fill="#98a2b3">' +
+      '<circle cx="' + (W - 200) + '" cy="' + (H - 6) + '" r="5" fill="#ff5a4f"/><text x="' + (W - 192) + '" y="' + (H - 2) + '">Emergency</text>' +
+      '<circle cx="' + (W - 118) + '" cy="' + (H - 6) + '" r="5" fill="#a78bfa"/><text x="' + (W - 110) + '" y="' + (H - 2) + '">VIP</text>' +
+      '<circle cx="' + (W - 70) + '" cy="' + (H - 6) + '" r="5" fill="#62a0ea"/><text x="' + (W - 62) + '" y="' + (H - 2) + '">Normal</text></g>';
+    var VW = Math.max(W, 330), VH = H + 20;
+    el.innerHTML = '<svg class="diagram" style="width:' + VW + 'px;max-width:100%" viewBox="0 0 ' + VW + ' ' + VH + '" role="img" aria-label="Heap of pending requests">' + lines + nodes + tip + legend + '</svg>';
+  }
+
+  function renderHash() {
+    var h = '';
+    for (var i = 0; i < TABLE_SIZE; i++) {
+      var chain = hash.t[i];
+      h += '<div class="hook' + (flashBucket === i ? ' flash' : '') + '"><span class="hn">' + i + '</span><div class="keys">';
+      if (!chain.length) h += '<span class="none">empty</span>';
+      chain.forEach(function (n) { h += '<span class="key">' + esc(n.plate) + '<b>bay ' + n.slotId + '</b></span>'; });
+      if (chain.length > 1) h += '<span class="coll">collision, chained</span>';
+      h += '</div></div>';
+    }
+    $('hashEl').innerHTML = h;
+    flashBucket = -1;
+  }
+
+  function renderBST() {
+    var L = layoutTree(bst.root, function (i) { return bst.left[i]; }, function (i) { return bst.right[i]; });
+    var cw = 40, rh = 50, W = L.cols * cw + 10, H = L.depth * rh + 12, lines = '', nodes = '';
+    Object.keys(L.pos).forEach(function (k) {
+      var i = +k, p = L.pos[i], px = p.x * cw + cw / 2 + 5, py = p.d * rh + 24, s = bst.data[i];
+      [bst.left[i], bst.right[i]].forEach(function (ch) {
+        if (ch !== -1) { var q = L.pos[ch]; lines += '<line x1="' + px + '" y1="' + py + '" x2="' + (q.x * cw + cw / 2 + 5) + '" y2="' + (q.d * rh + 24) + '" stroke="#475068" stroke-width="2"/>'; }
+      });
+      var col = s.free ? '#38d18a' : '#ff5a4f';
+      nodes += '<g><circle cx="' + px + '" cy="' + py + '" r="16" fill="#12151a" stroke="' + col + '" stroke-width="3"/>' +
+        '<text x="' + px + '" y="' + (py + 5) + '" text-anchor="middle" font-size="16" font-weight="700" fill="#ebe7d8">' + s.id + '</text></g>';
+    });
+    $('bstEl').innerHTML = '<svg class="diagram" viewBox="0 0 ' + Math.max(W, 300) + ' ' + (H + 22) + '" role="img" aria-label="Binary search tree of bays">' + lines + nodes +
+      '<g font-size="13" fill="#98a2b3"><circle cx="12" cy="' + (H + 10) + '" r="5" fill="#38d18a"/><text x="22" y="' + (H + 14) + '">Free</text>' +
+      '<circle cx="66" cy="' + (H + 10) + '" r="5" fill="#ff5a4f"/><text x="76" y="' + (H + 14) + '">Taken</text></g></svg>';
+  }
+
+  var NODE_POS = { 0: [44, 120] };
+  (function () {
+    for (var i = 1; i <= 5; i++) { NODE_POS[i] = [120 + (i - 1) * 88, 44]; NODE_POS[i + 5] = [120 + (i - 1) * 88, 196]; }
+  })();
+
+  function renderGraph() {
+    var lines = '', labels = '', nodes = '';
+    graph.edges.forEach(function (e) {
+      var a = NODE_POS[e[0]], b = NODE_POS[e[1]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      lines += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#475068" stroke-width="2"/>';
+      labels += '<rect x="' + (mx - 11) + '" y="' + (my - 9) + '" width="22" height="18" rx="3" fill="#1d222b"/><text x="' + mx + '" y="' + (my + 5) + '" text-anchor="middle" font-size="14" fill="#98a2b3">' + e[2] + '</text>';
+    });
+    for (var id = 0; id <= SLOT_COUNT; id++) {
+      var p = NODE_POS[id], col = '#98a2b3';
+      if (id > 0) { var idx = bst.search(id); col = idx !== -1 && !bst.data[idx].free ? '#ff5a4f' : '#38d18a'; }
+      var ring = id === nearestHit ? '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="22" fill="none" stroke="#f4c430" stroke-width="3"/>' : '';
+      nodes += ring + '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="16" fill="#12151a" stroke="' + col + '" stroke-width="3"/>' +
+        '<text x="' + p[0] + '" y="' + (p[1] + 5) + '" text-anchor="middle" font-size="' + (id === 0 ? 13 : 16) + '" font-weight="700" fill="#ebe7d8">' + (id === 0 ? 'Gate' : id) + '</text>';
+    }
+    $('graphEl').innerHTML = '<svg class="diagram" viewBox="0 0 560 250" role="img" aria-label="Graph of the parking lot">' + lines + labels + nodes + '</svg>';
+  }
+
+  function renderAll() {
+    renderStats(); renderBays(); renderHeap(); renderHash(); renderBST(); renderGraph();
+  }
+
+  /* ================= operations (same flow as the C++ menu) ================= */
+
+  function cleanPlate() { return $('plate').value.trim().toUpperCase().replace(/\s+/g, ''); }
+  function readType() { return +document.querySelector('input[name=type]:checked').value; }
+  function plateKnown(p) {
+    return hash.search(p) !== -1 || heap.a.some(function (r) { return r.plate === p; }) || queue.some(function (r) { return r.plate === p; });
+  }
+  function checkPlate(p, mustBeNew) {
+    if (!p) { msg('Enter a number plate first.', 'warn'); return false; }
+    if (!/^[A-Z0-9-]{2,10}$/.test(p)) { msg('A plate has 2 to 10 letters, digits or hyphens.', 'warn'); return false; }
+    if (mustBeNew && plateKnown(p)) { msg(p + ' already has a request or a reservation.', 'warn'); return false; }
+    return true;
+  }
+
+  function addRequest(plate, type) {
+    if (!checkPlate(plate, true)) return false;
+    if (heap.count() >= MAX_REQUESTS) { msg('The request board is full.', 'warn'); return false; }
+    var r = { plate: plate, priority: type, no: requestNo++ };
+    heap.insert(r);
+    log('Heap', plate + ' added as ' + TYPE_NAME[type] + ' (request ' + r.no + '). It moves up until its parent is more urgent.');
+    msg(plate + ' is on the request board.', 'ok');
+    renderAll();
+    return true;
+  }
+
+  function allocate(r, slotId, fromQueue) {
+    var idx = bst.search(slotId), s = bst.data[idx];
+    s.free = false; s.plate = r.plate;
+    var bucket = hash.insert(r.plate, s.id), chain = hash.t[bucket].length;
+    log('BST', 'Walking left first, the smallest free bay is ' + s.id + ' (zone ' + s.zone + '). ' + r.plate + ' parks there.');
+    log('Hash', r.plate + ' to bay ' + s.id + ' saved on hook ' + bucket + (chain > 1 ? '. Collision: it joins the chain with ' + (chain - 1) + ' other.' : '.'));
+    flashBucket = bucket;
+    parkCar(r, s.id, fromQueue);
+  }
+
+  function processNext() {
+    if (heap.count() === 0) { msg('No pending requests. Add a request first.', 'warn'); return false; }
+    var r = heap.extractMin();
+    log('Heap', 'Most urgent request out: ' + r.plate + ' (' + TYPE_NAME[r.priority] + ', request ' + r.no + ').');
+    var idx = bst.findFree(bst.root);
+    if (idx === -1) {
+      queue.push(r);
+      log('Queue', 'No free bay. ' + r.plate + ' joins the waiting lane at position ' + queue.length + '.');
+      var c = createCar(r); c.state = 'queue';
+      layoutQueue(false);
+    } else {
+      allocate(r, bst.data[idx].id, false);
+    }
+    renderAll();
+    return true;
+  }
+
+  function leave(plate, mode) {
+    if (!checkPlate(plate, false)) return false;
+    var slotId = hash.search(plate);
+    if (slotId === -1) {
+      var qi = queue.findIndex(function (r) { return r.plate === plate; });
+      if (qi !== -1) msg(plate + ' is still in the waiting lane (position ' + (qi + 1) + '), so it has no bay yet.', 'warn');
+      else if (heap.a.some(function (r) { return r.plate === plate; })) msg(plate + ' is still a pending request.', 'warn');
+      else msg('No reservation found for ' + plate + '.', 'warn');
+      log('Hash', 'Looked up ' + plate + ' on hook ' + hash.hash(plate) + ': not found.');
+      return false;
+    }
+    var fee = 0;
+    if (mode === 'checkout') {
+      var hours = +$('hours').value;
+      if (!(hours > 0)) { msg('Enter the hours parked (1 or more).', 'warn'); return false; }
+      fee = hours * RATE;
+    }
+    hash.remove(plate);
+    var idx = bst.search(slotId);
+    bst.data[idx].free = true; bst.data[idx].plate = '';
+    log('Hash', plate + ' removed from hook ' + hash.hash(plate) + '.');
+    if (mode === 'checkout') {
+      log('Info', plate + ' checks out of bay ' + slotId + '. Fee: ' + $('hours').value + ' h x Rs ' + RATE + ' = Rs ' + fee + '.');
+      msg(plate + ' checked out. Fee: Rs ' + fee + '.', 'ok');
+    } else {
+      log('Info', 'Reservation for ' + plate + ' cancelled. Bay ' + slotId + ' is free again.');
+      msg('Reservation for ' + plate + ' cancelled.', 'ok');
+    }
+    exitCar(plate);
+    if (queue.length > 0) {
+      var nxt = queue.shift();
+      log('Queue', nxt.plate + ' was first in the waiting lane, so it leaves the queue for the freed bay.');
+      allocate(nxt, slotId, true);
+      layoutQueue(false);
+    }
+    renderAll();
+    return true;
+  }
+
+  function highlightBay(id) {
+    var el = bayEls[id];
+    if (!el) return;
+    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+    setTimeout(function () { el.classList.remove('hit'); }, 3600);
+  }
+
+  function searchPlate(plate) {
+    if (!checkPlate(plate, false)) return;
+    var id = hash.search(plate), b = hash.hash(plate);
+    if (id !== -1) {
+      log('Hash', plate + ' hashes to hook ' + b + ' and is found there: bay ' + id + '.');
+      msg(plate + ' is in bay ' + id + '.', 'ok');
+      flashBucket = b; renderHash(); highlightBay(id);
+      return;
+    }
+    var qi = queue.findIndex(function (r) { return r.plate === plate; });
+    log('Hash', plate + ' hashes to hook ' + b + ': not found.');
+    if (qi !== -1) msg(plate + ' is waiting in the lane, position ' + (qi + 1) + '.', 'warn');
+    else if (heap.a.some(function (r) { return r.plate === plate; })) msg(plate + ' is still a pending request.', 'warn');
+    else msg('No reservation found for ' + plate + '.', 'warn');
+  }
+
+  function nearest() {
+    var start = +$('startSel').value;
+    var id = graph.nearestFree(start, bst);
+    var from = start === 0 ? 'the entrance' : 'bay ' + start;
+    if (id === -1) {
+      log('Graph', 'No free bay can be reached from ' + from + '.');
+      msg('There is no free bay right now.', 'warn');
+      nearestHit = -1;
+    } else {
+      log('Graph', 'Dijkstra from ' + from + ': nearest free bay is ' + id + ', ' + graph.lastDistance + ' m away.');
+      msg('Nearest free bay: ' + id + ' (' + graph.lastDistance + ' m).', 'ok');
+      nearestHit = id; highlightBay(id);
+    }
+    renderGraph();
+  }
+
+  /* ================= world setup ================= */
+
+  function clearCars() {
+    for (var p in cars) { cars[p].seq++; cars[p].el.remove(); }
+    cars = {};
+    $('moreQ').style.display = 'none';
+  }
+
+  function initWorld(quiet) {
+    clearCars();
+    $('log').innerHTML = '';
+    bst = new BST(); heap = new MinHeap(); queue = []; hash = new HashTable();
+    graph = new Graph(SLOT_COUNT + 1); requestNo = 1; flashBucket = -1; nearestHit = -1;
+    graph.addNode(0);
+    [5, 3, 8, 2, 4, 7, 9, 1, 6, 10].forEach(function (id) {
+      bst.insert({ id: id, zone: id <= 5 ? 'A' : 'B', free: true, plate: '' });
+      graph.addNode(id);
+    });
+    [[0, 1, 4], [1, 2, 3], [2, 3, 3], [3, 4, 3], [4, 5, 3], [0, 6, 5], [6, 7, 3], [7, 8, 3], [8, 9, 3], [9, 10, 3], [3, 8, 6]]
+      .forEach(function (e) { graph.addEdge(e[0], e[1], e[2]); });
+    renderAll();
+    if (!quiet) log('BST', '10 bays added in the order 5, 3, 8, 2, 4, 7, 9, 1, 6, 10 so the tree stays balanced. Each bay is also a node in the graph.');
+  }
+
+  function loadSample() {
+    initWorld(true);
+    [['AB1', 3, 2], ['BA1', 2, 6], ['LHR5', 3, 9]].forEach(function (it) {
+      var r = { plate: it[0], priority: it[1], no: requestNo++ };
+      var s = bst.data[bst.search(it[2])];
+      s.free = false; s.plate = r.plate;
+      hash.insert(r.plate, s.id);
+      parkInstant(r, s.id);
+    });
+    [['KHI-22', 3], ['AMB-7', 1], ['FSD-11', 2]].forEach(function (it) {
+      heap.insert({ plate: it[0], priority: it[1], no: requestNo++ });
+    });
+    renderAll();
+    log('Info', 'Sample data loaded: 3 cars parked and 3 requests waiting on the board. AB1 and BA1 land on the same hook, which is a collision.');
+  }
+
+  /* ================= scripted demo ================= */
+
+  async function playDemo() {
+    var t = ++demoToken, btn = $('btnDemo');
+    btn.disabled = true;
+    var go = async function (ms) { await sleep(ms); return t === demoToken; };
+    try {
+      initWorld();
+      if (!await go(1200)) return;
+      var first = [['AB1', 3], ['LHR5', 2], ['AMB-1', 1], ['BA1', 3]], i;
+      for (i = 0; i < first.length; i++) { addRequest(first[i][0], first[i][1]); if (!await go(700)) return; }
+      if (!await go(600)) return;
+      for (i = 0; i < 4; i++) { processNext(); if (!await go(2200)) return; }
+      for (i = 1; i <= 8; i++) { addRequest('CAR-0' + i, 3); if (!await go(280)) return; }
+      if (!await go(600)) return;
+      for (i = 0; i < 8; i++) { processNext(); if (!await go(1900)) return; }
+      if (!await go(1200)) return;
+      $('hours').value = 2;
+      leave('AB1', 'checkout');
+      if (!await go(4200)) return;
+      $('startSel').value = '3';
+      nearest();
+      if (!await go(2600)) return;
+      $('plate').value = 'BA1';
+      searchPlate('BA1');
+    } finally {
+      if (t === demoToken) btn.disabled = false;
+    }
+  }
+
+  /* ================= wiring ================= */
+
+  function stopDemo() { demoToken++; $('btnDemo').disabled = false; }
+
+  $('btnAdd').addEventListener('click', function () { stopDemo(); if (addRequest(cleanPlate(), readType())) { $('plate').value = ''; $('plate').focus(); } });
+  $('btnProcess').addEventListener('click', function () { stopDemo(); processNext(); });
+  $('btnSearch').addEventListener('click', function () { stopDemo(); searchPlate(cleanPlate()); });
+  $('btnCancel').addEventListener('click', function () { stopDemo(); leave(cleanPlate(), 'cancel'); });
+  $('btnCheckout').addEventListener('click', function () { stopDemo(); leave(cleanPlate(), 'checkout'); });
+  $('btnNearest').addEventListener('click', function () { stopDemo(); nearest(); });
+  $('btnSample').addEventListener('click', function () { stopDemo(); loadSample(); });
+  $('btnReset').addEventListener('click', function () { stopDemo(); initWorld(); msg('Everything is back to the start.', 'ok'); });
+  $('btnDemo').addEventListener('click', playDemo);
+  $('plate').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { stopDemo(); if (addRequest(cleanPlate(), readType())) $('plate').value = ''; }
+  });
+
+  var rz = null;
+  window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(relayoutAll, 120); });
+
+  buildBays();
+  initWorld();
+  window.__parksense = { addRequest: addRequest, processNext: processNext, leave: leave, loadSample: loadSample, nearest: nearest, searchPlate: searchPlate, get state() { return { bst: bst, heap: heap, queue: queue, hash: hash }; } };
+})();
+</script>
+</body>
+</html>
