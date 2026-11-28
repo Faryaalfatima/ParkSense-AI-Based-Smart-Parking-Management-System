@@ -43,14 +43,14 @@ public:
         // pehle check karo ye ID pehle se to nahi hai
         if (search(s.slotID) != -1)
         {
-            cout << "Ye slot ID pehle se maujood hai" << endl;
+            cout << "This slot ID already exists" << endl;
             return;
         }
 
         int place = findEmptyPlace();
         if (place == -1)
         {
-            cout << "Slots full hain" << endl;
+            cout << "Slots are full" << endl;
             return;
         }
 
@@ -122,11 +122,11 @@ public:
     {
         if (search(id) == -1)
         {
-            cout << "Ye slot nahi mila" << endl;
+            cout << "Slot not found" << endl;
             return;
         }
         root = deleteNode(root, id);
-        cout << "Slot " << id << " delete ho gaya" << endl;
+        cout << "Slot " << id << " deleted" << endl;
     }
 
     // node ko delete karo aur batao ke ab is jagah par kaun hai
@@ -172,7 +172,7 @@ public:
             }
 
             // Case 3: dono bache hain
-           
+
             // right side ka sabse chhota slot dhoondo
             int smallest = right[node];
             while (left[smallest] != -1)
@@ -203,7 +203,7 @@ public:
     {
         if (root == -1)
         {
-            cout << "Koi slot nahi hai" << endl;
+            cout << "No slots available" << endl;
             return;
         }
         inorder(root);

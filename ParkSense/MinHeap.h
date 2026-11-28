@@ -37,7 +37,7 @@ public:
     {
         if (isFull())
         {
-            cout << "Pending requests full hain" << endl;
+            cout << "Pending requests are full" << endl;
             return;
         }
 
@@ -65,7 +65,7 @@ public:
         Request top;
         if (isEmpty())
         {
-            cout << "Pending requests khali hain" << endl;
+            cout << "No pending requests" << endl;
             return top;   // khali request wapas
         }
 
@@ -114,7 +114,7 @@ public:
     {
         if (isEmpty())
         {
-            cout << "Pending requests khali hain" << endl;
+            cout << "No pending requests" << endl;
             return;
         }
         for (int i = 0; i < count; i++)
